@@ -1,5 +1,5 @@
-from flask import Flask, render_template
-
+from flask import Flask, render_template, request
+import json
 app = Flask (__name__)
 
 lampotilat =[
@@ -7,13 +7,18 @@ lampotilat =[
     {'x':2, 'y':10},
     {'x':2, 'y':15}
 ]
-paivat = ['maanantai', 'tiistai', 'keskiviikko']
+paivat = ['maanantai', 'tiistai', 'keskiviikko', 'Torstai', 'Perjantai', 'Lauantai', 'Sunnuntai']
 
 @app.route('/', methods=['GET'])
 def index():
     return render_template("mittaukset.html", taulukko=lampotilat, paivat=paivat)
 
 
+@app.route('/lisaa', methods=['POST'])
+def lisaa():
+    uusimittaus = request.get_json(force=True)
+    lampotilat.append(uusimittaus)
+    return(json.dumps(uusimittaus))
 
 
 
