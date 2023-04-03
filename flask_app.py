@@ -1,18 +1,27 @@
 from flask import Flask, render_template, request
 import json
-app = Flask (__name__)
+import sqlite3
 
-lampotilat =[
+app = Flask(__name__)
+
+con = sqlite3.connect("mittaukset.db3")
+cur = con.cursor()
+cur.execute("CREATE TABLE IF NOT EXISTS mittaukset (id INTEGER PRIMARY KEY, paiva INTEGER, mittaus INTEGER)")
+con.commit()
+con.close()
+
+
+lampotilat = [
     {'x':1, 'y':14},
     {'x':2, 'y':10},
-    {'x':2, 'y':15}
+    {'x':3, 'y':15}
 ]
-paivat = ['maanantai', 'tiistai', 'keskiviikko', 'Torstai', 'Perjantai', 'Lauantai', 'Sunnuntai']
 
-@app.route('/', methods=['GET'])
+paivat = ['Maanantai', 'Tiistai', 'Keskiviikko', 'Torstai', 'Perjantai', 'Lauantai', 'Sunnuntai']
+
+@app.route('/api', methods=['GET'])
 def index():
     return render_template("mittaukset.html", taulukko=lampotilat, paivat=paivat)
-
 
 @app.route('/lisaa', methods=['POST'])
 def lisaa():
@@ -20,8 +29,34 @@ def lisaa():
     lampotilat.append(uusimittaus)
     return(json.dumps(uusimittaus))
 
+@app.route('/lisaakantaan', methods=['POST'])
+def lisaa_tietokantaan():
+    uusimittaus = request.get_json(force=True)
+
+    con = sqlite3.connect("mittaukset.db3")
+    cur = con.cursor()
+    cur.execute("INSERT INTO mittaukset (paiva, mittaus) VALUES (?,?)", [uusimittaus["x"], uusimittaus["y"]])
+    con.commit()
+    con.close()
+
+    return(json.dumps(uusimittaus))
+
+@app.route('/api/haekannasta', methods=['GET'])
+def hae_tietokannasata():
+    con = sqlite3.connect("mittaukset.db3")
+    cur = con.cursor()
+    cur.execute("SELECT paiva, mittaus FROM mittaukset")
+
+    tiedot = cur.fetchall()
+    kantatiedot = list()
+    for paiva in tiedot:
+        temp = dict(x=paiva[0], y=paiva[1])
+        kantatiedot.append(temp)
+    con.commit
+    con.close
+    return render_template("mittaukset.html", taulukko=kantatiedot, paivat=paivat)
 
 
 
-if __name__ ==  "__main__":
+if __name__ == "__main__":
     app.run(debug=True)
